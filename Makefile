@@ -18,7 +18,7 @@ $(PRODUCT): $(OBJECTS)
 	$(CC) $(OBJECTS) $(LIBS) -o $@
 
 clean:
-	rm -f *.o
+	rm -f *.o *~ *#
 	rm -f $(PRODUCT)
 
 git: add commit push
