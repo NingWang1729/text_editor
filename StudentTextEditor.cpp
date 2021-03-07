@@ -15,6 +15,7 @@ TextEditor* createTextEditor(Undo* un)
 // Constructor
 StudentTextEditor::StudentTextEditor(Undo* undo)
  : TextEditor(undo) {
+    m_text_editor.push_back("");
     m_text_iterator = m_text_editor.begin();
     m_row = 0;
     m_col = 0;
@@ -27,7 +28,7 @@ StudentTextEditor::~StudentTextEditor()
 }
 
 bool StudentTextEditor::load(std::string file) {
-    m_text_editor.clear();
+    StudentTextEditor::reset();
     std::ifstream current_file(file);
     std::ofstream debug_log("stderr.txt");
     if (!current_file) {
@@ -59,8 +60,6 @@ bool StudentTextEditor::load(std::string file) {
         }
     }
     m_text_iterator = m_text_editor.begin();
-    m_row = 0;
-    m_col = 0;
     return true;
 }
 
@@ -69,7 +68,9 @@ bool StudentTextEditor::save(std::string file) {
 }
 
 void StudentTextEditor::reset() {
-	// TODO
+    m_row = 0;
+    m_col = 0;
+    m_text_editor.clear();
 }
 
 void StudentTextEditor::move(Dir dir) {
@@ -127,7 +128,6 @@ void StudentTextEditor::move(Dir dir) {
 	break;
     }
     debug_log << "row: " << m_row << " col: " << m_col << " rowlen: " << m_text_iterator->size() << std::endl;
-	// TODO
 }
 
 void StudentTextEditor::del() {
@@ -139,7 +139,13 @@ void StudentTextEditor::backspace() {
 }
 
 void StudentTextEditor::insert(char ch) {
-	// TODO
+    if (ch != '\t') {
+	*m_text_iterator = m_text_iterator->substr(0, m_col) + ch + m_text_iterator->substr(m_col, m_text_iterator->size() - m_col);
+	m_col++;
+    } else {
+	*m_text_iterator = m_text_iterator->substr(0, m_col) + "    " + m_text_iterator->substr(m_col, m_text_iterator->size() - m_col);
+	m_col += 4;
+    }
 }
 
 void StudentTextEditor::enter() {

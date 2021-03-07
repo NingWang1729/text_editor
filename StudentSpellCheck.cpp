@@ -15,7 +15,6 @@ StudentSpellCheck::~StudentSpellCheck() {
 }
 
 bool StudentSpellCheck::load(std::string dictionaryFile) {
-//    return true;
     std::ifstream dictionary(dictionaryFile);
     std::ofstream debug_log("stderr.txt");
     if (!dictionary) {
@@ -23,6 +22,7 @@ bool StudentSpellCheck::load(std::string dictionaryFile) {
         return false;
     } else {
         debug_log << "Dictionary found!\n";
+        m_dictionary.clear();
         std::string s;
         while (getline(dictionary, s)) {
             m_dictionary.push_back(s);
