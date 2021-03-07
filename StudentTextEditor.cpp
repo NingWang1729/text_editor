@@ -15,7 +15,9 @@ TextEditor* createTextEditor(Undo* un)
 // Constructor
 StudentTextEditor::StudentTextEditor(Undo* undo)
  : TextEditor(undo) {
-	// TODO
+    m_text_iterator = m_text_editor.begin();
+    m_row = 0;
+    m_col = 0;
 }
 
 // Destructor
@@ -35,8 +37,14 @@ bool StudentTextEditor::load(std::string file) {
         debug_log << "Target textfile found!\n";
         std::string s;
         while (getline(current_file, s)) {
-	    if (s.size() > 0 && s[s.size() - 1] == '\r') {
-		s = s.substr(0, s.size() - 1);
+	    for (int i = 0; i < s.size(); i++) {
+		if (s[i] == '\t') {
+		    // Account for tab characters
+		    s = s.substr(0, i) + "    " + s.substr(i + 1, s.size() - i - 1);
+		} else if (s[i] == '\r') {
+		    // Account for carriage returns
+		    s = s.substr(0, i) + s.substr(i + 1, s.size() - i - 1);
+		}
 	    }
             m_text_editor.push_back(s);
         }
@@ -50,6 +58,9 @@ bool StudentTextEditor::load(std::string file) {
             break;
         }
     }
+    m_text_iterator = m_text_editor.begin();
+    m_row = 0;
+    m_col = 0;
     return true;
 }
 
@@ -62,6 +73,60 @@ void StudentTextEditor::reset() {
 }
 
 void StudentTextEditor::move(Dir dir) {
+    std::ofstream debug_log("stderr.txt");
+    switch (dir) {
+    case Dir::UP: {
+	if (m_row > 0) {
+	    m_row--;
+	    m_text_iterator--;
+	    if (m_col > m_text_iterator->size()) {
+		m_col = m_text_iterator->size();
+	    }
+	}
+	break;
+    }
+    case Dir::DOWN: {
+	if (m_row < m_text_editor.size() - 1) {
+	    m_row++;
+	    m_text_iterator++;
+	    if (m_col > m_text_iterator->size()) {
+		m_col = m_text_iterator->size();
+	    }
+	}
+	break;
+    }
+    case Dir::LEFT: {
+	if (m_col > 0) {
+	    m_col--;
+	} else if (m_row > 0) {
+	    m_row--;
+	    m_text_iterator--;
+	    m_col = m_text_iterator->size();
+	}
+	break;
+    }
+    case Dir::RIGHT: {
+	if (m_col < m_text_iterator->size()) {
+	    m_col++;
+	} else if (m_row < m_text_editor.size() - 1) {
+	    m_col = 0;
+	    m_row++;
+	    m_text_iterator++;
+	}
+	break;
+    }
+    case Dir::HOME: {
+	m_col = 0;
+	break;
+    }
+    case Dir::END: {
+	m_col = m_text_iterator->size();
+	break;
+    }
+    default:
+	break;
+    }
+    debug_log << "row: " << m_row << " col: " << m_col << " rowlen: " << m_text_iterator->size() << std::endl;
 	// TODO
 }
 
@@ -82,7 +147,8 @@ void StudentTextEditor::enter() {
 }
 
 void StudentTextEditor::getPos(int& row, int& col) const {
-	// TODO
+    row = m_row;
+    col = m_col;
 }
 
 int StudentTextEditor::getLines(int startRow, int numRows, std::vector<std::string>& lines) const {
