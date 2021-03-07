@@ -1,0 +1,5 @@
+Target textfile found!
+First three lines are:
+Project Gutenberg Etext of Three Men in a Boat by Jerome K. Jerome
+
+Please take a look at the important information in this header.
