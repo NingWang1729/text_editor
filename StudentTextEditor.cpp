@@ -5,7 +5,6 @@
 #include <list>
 #include <iostream>
 #include <fstream>
-#include <regex>
 
 TextEditor* createTextEditor(Undo* un)
 {
@@ -51,6 +50,10 @@ bool StudentTextEditor::load(std::string file) {
         }
     }
     debug_log << "First three lines are:\n";
+    // Take into account empty text files
+    if (m_text_editor.size() == 0) {
+	m_text_editor.push_back("");
+    }
     std::list<std::string>::iterator it = m_text_editor.begin();
     for (int i = 0; i < 3; i++) {
         debug_log << *it << std::endl;
@@ -64,7 +67,14 @@ bool StudentTextEditor::load(std::string file) {
 }
 
 bool StudentTextEditor::save(std::string file) {
-	return false;  // TODO
+    std::ofstream output_file(file);
+    if (!output_file) {
+	return false;
+    }
+    for (std::list<std::string>::iterator it = m_text_editor.begin(); it != m_text_editor.end(); it++) {
+	output_file << *it << std::endl;
+    }
+	return true;
 }
 
 void StudentTextEditor::reset() {
@@ -132,10 +142,34 @@ void StudentTextEditor::move(Dir dir) {
 
 void StudentTextEditor::del() {
 	// TODO
+    if (m_col == m_text_iterator->size()) {
+	if (m_row == m_text_editor.size() - 1) {
+	    return;
+	}
+	std::string old = *m_text_iterator;
+	m_text_iterator = m_text_editor.erase(m_text_iterator);
+	*m_text_iterator = old + *m_text_iterator;
+    } else {
+        *m_text_iterator = m_text_iterator->substr(0, m_col) + m_text_iterator->substr(m_col + 1, m_text_iterator->size() - m_col - 1);
+    }
 }
 
 void StudentTextEditor::backspace() {
 	// TODO
+    if (m_col == 0) {
+	if (m_row == 0) {
+	    return;
+	}
+	m_text_iterator--;
+	m_row--;
+	m_col = m_text_iterator->size();
+	std::string old = *m_text_iterator;
+	m_text_iterator = m_text_editor.erase(m_text_iterator);
+	*m_text_iterator = old + *m_text_iterator;
+    } else {
+	*m_text_iterator = m_text_iterator->substr(0, m_col - 1) + m_text_iterator->substr(m_col, m_text_iterator->size() - m_col);
+	m_col--;
+    }
 }
 
 void StudentTextEditor::insert(char ch) {
@@ -149,7 +183,12 @@ void StudentTextEditor::insert(char ch) {
 }
 
 void StudentTextEditor::enter() {
-	// TODO
+    std::string s1 = m_text_iterator->substr(0, m_col);
+    std::string s2 = m_text_iterator->substr(m_col, m_text_iterator->size() - m_col);
+    m_text_editor.insert(m_text_iterator, s1);
+    m_row++;
+    m_col = 0;
+    *m_text_iterator = s2;
 }
 
 void StudentTextEditor::getPos(int& row, int& col) const {
