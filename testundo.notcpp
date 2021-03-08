@@ -1,0 +1,12 @@
+#include "StudentUndo.h"
+#include <iostream>
+
+int main() {
+    StudentUndo undo;
+    undo.submit(Undo::Action::INSERT, 0, 0, 'h');
+    Undo::Action action;
+    int row, col, count;
+    std::string text;
+    action = undo.get(row, col, count, text);
+    
+}

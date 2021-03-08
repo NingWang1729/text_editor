@@ -27,8 +27,8 @@ public:
 private:
     std::list<std::string> m_text_editor;
     std::list<std::string>::iterator  m_text_iterator;
-    unsigned long m_row;
-    unsigned long m_col;
+    int m_row;
+    int m_col;
 };
 
 #endif // STUDENTTEXTEDITOR_H_

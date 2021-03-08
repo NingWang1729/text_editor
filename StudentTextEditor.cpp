@@ -81,6 +81,7 @@ void StudentTextEditor::reset() {
     m_row = 0;
     m_col = 0;
     m_text_editor.clear();
+    TextEditor::getUndo()->clear();
 }
 
 void StudentTextEditor::move(Dir dir) {
@@ -149,7 +150,9 @@ void StudentTextEditor::del() {
 	std::string old = *m_text_iterator;
 	m_text_iterator = m_text_editor.erase(m_text_iterator);
 	*m_text_iterator = old + *m_text_iterator;
+	TextEditor::getUndo()->submit(Undo::Action::JOIN, m_row, m_col, '\n');
     } else {
+	TextEditor::getUndo()->submit(Undo::Action::DELETE, m_row, m_col, (*m_text_iterator)[m_col]);
         *m_text_iterator = m_text_iterator->substr(0, m_col) + m_text_iterator->substr(m_col + 1, m_text_iterator->size() - m_col - 1);
     }
 }
@@ -163,10 +166,12 @@ void StudentTextEditor::backspace() {
 	m_text_iterator--;
 	m_row--;
 	m_col = m_text_iterator->size();
+	TextEditor::getUndo()->submit(Undo::Action::JOIN, m_row, m_col, '\n');
 	std::string old = *m_text_iterator;
 	m_text_iterator = m_text_editor.erase(m_text_iterator);
 	*m_text_iterator = old + *m_text_iterator;
     } else {
+	TextEditor::getUndo()->submit(Undo::Action::DELETE, m_row, m_col - 1, (*m_text_iterator)[m_col - 1]);
 	*m_text_iterator = m_text_iterator->substr(0, m_col - 1) + m_text_iterator->substr(m_col, m_text_iterator->size() - m_col);
 	m_col--;
     }
@@ -176,13 +181,22 @@ void StudentTextEditor::insert(char ch) {
     if (ch != '\t') {
 	*m_text_iterator = m_text_iterator->substr(0, m_col) + ch + m_text_iterator->substr(m_col, m_text_iterator->size() - m_col);
 	m_col++;
+        TextEditor::getUndo()->submit(Undo::Action::INSERT, m_row, m_col, ch);
     } else {
 	*m_text_iterator = m_text_iterator->substr(0, m_col) + "    " + m_text_iterator->substr(m_col, m_text_iterator->size() - m_col);
-	m_col += 4;
+	m_col++;
+	TextEditor::getUndo()->submit(Undo::Action::INSERT, m_row, m_col, ' ');
+	m_col++;
+	TextEditor::getUndo()->submit(Undo::Action::INSERT, m_row, m_col, ' ');
+	m_col++;
+	TextEditor::getUndo()->submit(Undo::Action::INSERT, m_row, m_col, ' ');
+	m_col++;
+	TextEditor::getUndo()->submit(Undo::Action::INSERT, m_row, m_col, ' ');
     }
 }
 
 void StudentTextEditor::enter() {
+    TextEditor::getUndo()->submit(Undo::Action::SPLIT, m_row, m_col, '\n');
     std::string s1 = m_text_iterator->substr(0, m_col);
     std::string s2 = m_text_iterator->substr(m_col, m_text_iterator->size() - m_col);
     m_text_editor.insert(m_text_iterator, s1);
@@ -227,5 +241,50 @@ int StudentTextEditor::getLines(int startRow, int numRows, std::vector<std::stri
 }
 
 void StudentTextEditor::undo() {
-	// TODO
+    int count;
+    std::string text;
+    int old_row = m_row;
+    int old_col = m_col;
+    auto undo_action = TextEditor::getUndo()->get(m_row, m_col, count, text);
+    m_text_iterator = m_text_editor.begin();
+    for (int i = 0; i < m_row; i++) {
+	m_text_iterator++;
+	if (m_text_iterator == m_text_editor.end()) {
+	    std::ofstream debug_log("stderr.txt");
+	    debug_log << "ERROR when trying to undo\n";
+	    m_row = old_row;
+	    m_col = old_col;
+	    return;
+	}
+    }
+    switch (undo_action) {
+    case Undo::Action::INSERT: {
+        *m_text_iterator = m_text_iterator->substr(0, m_col) + text + m_text_iterator->substr(m_col, m_text_iterator->size() - m_col);
+	m_col += text.size();
+	break;
+    }
+    case Undo::Action::SPLIT: {
+	// Same as enter except without submitting undo
+	std::string s1 = m_text_iterator->substr(0, m_col);
+	std::string s2 = m_text_iterator->substr(m_col, m_text_iterator->size() - m_col);
+	m_text_editor.insert(m_text_iterator, s1);
+	m_row++;
+	m_col = 0;
+	*m_text_iterator = s2;
+	break;
+    }
+    case Undo::Action::DELETE: {
+        *m_text_iterator = m_text_iterator->substr(0, m_col - count) + m_text_iterator->substr(m_col, m_text_iterator->size() - m_col - count);
+	m_col -= count;
+	break;
+    }
+    case Undo::Action::JOIN: {
+	std::string old = *m_text_iterator;
+	m_text_iterator = m_text_editor.erase(m_text_iterator);
+	*m_text_iterator = old + *m_text_iterator;
+    }
+    default: {
+	break;
+    }
+    }
 }

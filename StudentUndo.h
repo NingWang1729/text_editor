@@ -2,6 +2,8 @@
 #define STUDENTUNDO_H_
 
 #include "Undo.h"
+#include <stack>
+#include <string>
 
 class StudentUndo : public Undo {
 public:
@@ -11,7 +13,14 @@ public:
 	void clear();
 
 private:
-
+    struct action_object {
+	Undo::Action m_action;
+	unsigned long m_row;
+	unsigned long m_col;
+	unsigned long m_length;
+	std::string m_text;
+    };
+    std::stack<action_object> m_actions;
 };
 
 #endif // STUDENTUNDO_H_
