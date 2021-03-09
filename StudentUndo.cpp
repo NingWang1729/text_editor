@@ -5,6 +5,10 @@ Undo* createUndo()
 	return new StudentUndo;
 }
 
+StudentUndo::~StudentUndo() {
+    StudentUndo::clear();
+}
+
 void StudentUndo::submit(const Action action, int row, int col, char ch) {
     if (!m_actions.empty() && action == Action::DELETE && m_actions.top().m_action == Action::DELETE) {
 	if (row == m_actions.top().m_row) {

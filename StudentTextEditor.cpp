@@ -23,7 +23,7 @@ StudentTextEditor::StudentTextEditor(Undo* undo)
 // Destructor
 StudentTextEditor::~StudentTextEditor()
 {
-	// TODO
+    // Doesn't have anything do destroy.
 }
 
 bool StudentTextEditor::load(std::string file) {
