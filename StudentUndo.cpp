@@ -29,18 +29,17 @@ void StudentUndo::submit(const Action action, int row, int col, char ch) {
 		return;
 	    }
 	}
-    } else {
-	StudentUndo::action_object new_action;
-	new_action.m_action = action;
-	new_action.m_row = row;
-	new_action.m_col = col;
-	new_action.m_length = 1;
-	new_action.m_text = "";
-	if (action == Action::INSERT || action == Action::DELETE) {
-	    new_action.m_text += ch;
-	}
-	m_actions.push(new_action);
     }
+    StudentUndo::action_object new_action;
+    new_action.m_action = action;
+    new_action.m_row = row;
+    new_action.m_col = col;
+    new_action.m_length = 1;
+    new_action.m_text = "";
+    if (action == Action::INSERT || action == Action::DELETE) {
+	new_action.m_text += ch;
+    }
+    m_actions.push(new_action);
 }
 
 StudentUndo::Action StudentUndo::get(int& row, int& col, int& count, std::string& text) {
