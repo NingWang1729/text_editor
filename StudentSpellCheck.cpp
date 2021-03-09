@@ -4,10 +4,16 @@
 #include <iostream>
 #include <stdio.h>
 #include <fstream>
+#include <ctype.h>
 
 SpellCheck* createSpellCheck()
 {
 	return new StudentSpellCheck;
+}
+
+StudentSpellCheck::StudentSpellCheck()
+    : SpellCheck() {
+    m_root = new StudentSpellCheck::node;
 }
 
 StudentSpellCheck::~StudentSpellCheck() {
@@ -16,27 +22,134 @@ StudentSpellCheck::~StudentSpellCheck() {
 
 bool StudentSpellCheck::load(std::string dictionaryFile) {
     std::ifstream dictionary(dictionaryFile);
-    std::ofstream debug_log("stderr.txt");
+    std::ofstream debug_log;
+    debug_log.open("stderr.txt");
     if (!dictionary) {
         debug_log << "Dictionary not found!\n";
         return false;
     } else {
         debug_log << "Dictionary found!\n";
-        m_dictionary.clear();
+        StudentSpellCheck::clear(m_root);
+	m_root = new node;
         std::string s;
         while (getline(dictionary, s)) {
-            m_dictionary.push_back(s);
+	    StudentSpellCheck::insert(m_root, s);
         }
     }
-    debug_log << "First three words are:\n";
-    debug_log << m_dictionary[0] << std::endl;
-    debug_log << m_dictionary[1] << std::endl;
-    debug_log << m_dictionary[2] << std::endl;
+    debug_log << "First few Words with 5 or fewer characters:\n";
+    debug_log.close();
+    StudentSpellCheck::display(m_root, 6);
     return true;
 }
 
+void StudentSpellCheck::insert(StudentSpellCheck::node* root, std::string key) {
+    if (root == nullptr) {
+	return;
+    }
+    // TODO: lowercase the key and filter to only a-z and '
+    std::string new_key = "";
+    for (auto &ch : key) {
+	if (isalpha(ch)) {
+	    new_key += tolower(ch);
+	} else if (ch == '\'') {
+	    new_key += ch;
+	}
+    }
+    node* current = root;
+    for (auto &ch : new_key) {
+	if (ch == '\'') {
+	    // It's a ' character
+	    if (current->m_children[26] == nullptr) {
+		current->m_children[26] = new node;
+	    }
+	    current = current->m_children[26];
+	} else {
+	    // Go to whatever character it is.
+	    if (current->m_children[ch - 'a'] == nullptr) {
+		current->m_children[ch - 'a'] = new node;
+	    }
+	    current = current->m_children[ch - 'a'];
+	}
+    }
+    current->end = true;
+    current->word = new_key;
+}
+
+bool StudentSpellCheck::search(StudentSpellCheck::node* root, std::string key) {
+    StudentSpellCheck::node* current = root;
+    for (auto &ch : key) {
+	if (ch == '\'') {
+	    // It's a ' character
+	    if (current->m_children[26] == nullptr) {
+		return false;
+	    }
+	    current = current->m_children[26];
+	} else {
+	    // Go to whatever character it is.
+	    if (current->m_children[ch - 'a'] == nullptr) {
+		return false;
+	    }
+	    current = current->m_children[ch - 'a'];
+	}
+    }
+    return true;
+}
+
+void StudentSpellCheck::display(StudentSpellCheck::node* root, int ticks) {
+    // To limit how deep to look
+    if (ticks <= 0) {
+	return;
+    }
+    std::ofstream debug_log("stderr.txt", std::ios::app);
+    if (root->end) {
+	debug_log << root->word << std::endl;
+    }
+    for (int i = 0; i < 27; i++) {
+	if (root->m_children[i] == nullptr) {
+	    continue;
+	}
+	StudentSpellCheck::display(root->m_children[i], ticks - 1);
+    }
+}
+
+void StudentSpellCheck::clear(StudentSpellCheck::node* root) {
+    if (root == nullptr) {
+	return;
+    }
+    for (int i = 0; i < 27; i++) {
+	if (root->m_children[i] != nullptr) {
+	    StudentSpellCheck::clear(root->m_children[i]);
+	}
+    }
+    delete root;
+}
+
 bool StudentSpellCheck::spellCheck(std::string word, int max_suggestions, std::vector<std::string>& suggestions) {
-	return false; // TODO
+    if (StudentSpellCheck::search(m_root, word)) {
+	return true;
+    }
+    suggestions.clear();
+    int count = 0;
+    for (int i = 0; i < word.size(); i++) {
+	std::string temp = word;
+	// all letters 1-z
+	for (int j = 0; j < 27; j++) {
+	    if (j == 26) {
+		temp[i] = '\'';
+	    } else {
+		temp[i] = 'a' + j;
+	    }
+	    if (StudentSpellCheck::search(m_root, temp)) {
+		if (count < max_suggestions) {
+		    suggestions.push_back(temp);
+		    count++;
+		} else {
+		    return false;
+		}
+	    }
+	}
+    }
+    return false;
 }
 
 void StudentSpellCheck::spellCheckLine(const std::string& line, std::vector<SpellCheck::Position>& problems) {

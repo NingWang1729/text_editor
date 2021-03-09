@@ -274,7 +274,7 @@ void StudentTextEditor::undo() {
 	break;
     }
     case Undo::Action::DELETE: {
-        *m_text_iterator = m_text_iterator->substr(0, m_col - count) + m_text_iterator->substr(m_col, m_text_iterator->size() - m_col - count);
+        *m_text_iterator = m_text_iterator->substr(0, m_col - count) + m_text_iterator->substr(m_col, m_text_iterator->size() - m_col);
 	m_col -= count;
 	break;
     }
