@@ -27,11 +27,11 @@ StudentTextEditor::~StudentTextEditor()
 }
 
 bool StudentTextEditor::load(std::string file) {
-    StudentTextEditor::reset();
     std::ifstream current_file(file);
     if (!current_file) {
         return false;
     } else {
+	StudentTextEditor::reset();
         std::string s;
         while (getline(current_file, s)) {
 	    for (int i = 0; i < s.size(); i++) {
