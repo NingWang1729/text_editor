@@ -18,7 +18,7 @@ $(PRODUCT): $(OBJECTS)
 	$(CC) $(OBJECTS) $(LIBS) -o $@
 
 clean:
-	rm -f *.o *~ *#
+	rm -f *.o *~ *# *.zip *.tar *.tgz
 	rm -f $(PRODUCT)
 
 git: add commit push
@@ -34,3 +34,10 @@ push:
 
 pull:
 	git pull
+
+submit: clean
+	zip p4.zip Student*
+
+view:
+	zipinfo *.zip
+
