@@ -5,6 +5,7 @@
 #include <stdio.h>
 #include <fstream>
 #include <ctype.h>
+#include <regex>
 
 SpellCheck* createSpellCheck()
 {
@@ -22,13 +23,9 @@ StudentSpellCheck::~StudentSpellCheck() {
 
 bool StudentSpellCheck::load(std::string dictionaryFile) {
     std::ifstream dictionary(dictionaryFile);
-    std::ofstream debug_log;
-    debug_log.open("stderr.txt");
     if (!dictionary) {
-        debug_log << "Dictionary not found!\n";
         return false;
     } else {
-        debug_log << "Dictionary found!\n";
         StudentSpellCheck::clear(m_root);
 	m_root = new node;
         std::string s;
@@ -36,9 +33,7 @@ bool StudentSpellCheck::load(std::string dictionaryFile) {
 	    StudentSpellCheck::insert(m_root, s);
         }
     }
-    debug_log << "First few Words with 5 or fewer characters:\n";
-    debug_log.close();
-    StudentSpellCheck::display(m_root, 6);
+    // StudentSpellCheck::display(m_root, 6);
     return true;
 }
 
@@ -46,7 +41,7 @@ void StudentSpellCheck::insert(StudentSpellCheck::node* root, std::string key) {
     if (root == nullptr) {
 	return;
     }
-    // TODO: lowercase the key and filter to only a-z and '
+
     std::string new_key = "";
     for (auto &ch : key) {
 	if (isalpha(ch)) {
@@ -55,6 +50,7 @@ void StudentSpellCheck::insert(StudentSpellCheck::node* root, std::string key) {
 	    new_key += ch;
 	}
     }
+
     node* current = root;
     for (auto &ch : new_key) {
 	if (ch == '\'') {
@@ -76,8 +72,21 @@ void StudentSpellCheck::insert(StudentSpellCheck::node* root, std::string key) {
 }
 
 bool StudentSpellCheck::search(StudentSpellCheck::node* root, std::string key) {
-    StudentSpellCheck::node* current = root;
+    if (root == nullptr) {
+	return false;
+    }
+
+    std::string new_key = "";
     for (auto &ch : key) {
+	if (isalpha(ch)) {
+	    new_key += tolower(ch);
+	} else if (ch == '\'') {
+	    new_key += ch;
+	}
+    }
+
+    node* current = root;
+    for (auto &ch : new_key) {
 	if (ch == '\'') {
 	    // It's a ' character
 	    if (current->m_children[26] == nullptr) {
@@ -100,10 +109,12 @@ void StudentSpellCheck::display(StudentSpellCheck::node* root, int ticks) {
     if (ticks <= 0) {
 	return;
     }
+
     std::ofstream debug_log("stderr.txt", std::ios::app);
     if (root->end) {
 	debug_log << root->word << std::endl;
     }
+
     for (int i = 0; i < 27; i++) {
 	if (root->m_children[i] == nullptr) {
 	    continue;
@@ -116,6 +127,7 @@ void StudentSpellCheck::clear(StudentSpellCheck::node* root) {
     if (root == nullptr) {
 	return;
     }
+
     for (int i = 0; i < 27; i++) {
 	if (root->m_children[i] != nullptr) {
 	    StudentSpellCheck::clear(root->m_children[i]);
@@ -125,10 +137,11 @@ void StudentSpellCheck::clear(StudentSpellCheck::node* root) {
 }
 
 bool StudentSpellCheck::spellCheck(std::string word, int max_suggestions, std::vector<std::string>& suggestions) {
+    suggestions.clear();
     if (StudentSpellCheck::search(m_root, word)) {
 	return true;
     }
-    suggestions.clear();
+    
     int count = 0;
     for (int i = 0; i < word.size(); i++) {
 	std::string temp = word;
@@ -153,5 +166,19 @@ bool StudentSpellCheck::spellCheck(std::string word, int max_suggestions, std::v
 }
 
 void StudentSpellCheck::spellCheckLine(const std::string& line, std::vector<SpellCheck::Position>& problems) {
-	// TODO
+    problems.clear();
+    std::string text = line.substr(0, line.size());
+    std::regex word_pattern("[A-Za-z']+");
+    std::smatch word_match;
+    int pos = 0;
+    while(std::regex_search(text, word_match, word_pattern)) {
+	if (!(search(m_root, word_match[0].str()))) {
+	    SpellCheck::Position error;
+	    error.start = pos + word_match.position(0);
+	    error.end = pos + word_match.position(0) + word_match[0].str().size() - 1;
+	    problems.push_back(error);
+	}
+        pos += word_match.position(0) + word_match[0].str().size();
+        text = word_match.suffix();
+    }
 }

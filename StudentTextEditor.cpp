@@ -29,12 +29,9 @@ StudentTextEditor::~StudentTextEditor()
 bool StudentTextEditor::load(std::string file) {
     StudentTextEditor::reset();
     std::ifstream current_file(file);
-    std::ofstream debug_log("stderr.txt");
     if (!current_file) {
-        debug_log << "Target textfile not found!\n";
         return false;
     } else {
-        debug_log << "Target textfile found!\n";
         std::string s;
         while (getline(current_file, s)) {
 	    for (int i = 0; i < s.size(); i++) {
@@ -49,14 +46,12 @@ bool StudentTextEditor::load(std::string file) {
             m_text_editor.push_back(s);
         }
     }
-    debug_log << "First three lines are:\n";
     // Take into account empty text files
     if (m_text_editor.size() == 0) {
 	m_text_editor.push_back("");
     }
     std::list<std::string>::iterator it = m_text_editor.begin();
     for (int i = 0; i < 3; i++) {
-        debug_log << *it << std::endl;
         it++;
         if (it == m_text_editor.end()) {
             break;
@@ -85,7 +80,6 @@ void StudentTextEditor::reset() {
 }
 
 void StudentTextEditor::move(Dir dir) {
-    std::ofstream debug_log("stderr.txt");
     switch (dir) {
     case Dir::UP: {
 	if (m_row > 0) {
@@ -138,7 +132,6 @@ void StudentTextEditor::move(Dir dir) {
     default:
 	break;
     }
-    debug_log << "row: " << m_row << " col: " << m_col << " rowlen: " << m_text_iterator->size() << std::endl;
 }
 
 void StudentTextEditor::del() {
@@ -250,8 +243,6 @@ void StudentTextEditor::undo() {
     for (int i = 0; i < m_row; i++) {
 	m_text_iterator++;
 	if (m_text_iterator == m_text_editor.end()) {
-	    std::ofstream debug_log("stderr.txt");
-	    debug_log << "ERROR when trying to undo\n";
 	    m_row = old_row;
 	    m_col = old_col;
 	    return;
