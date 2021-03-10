@@ -18,7 +18,7 @@ StudentSpellCheck::StudentSpellCheck()
 }
 
 StudentSpellCheck::~StudentSpellCheck() {
-	// TODO
+    StudentSpellCheck::clear(m_root);
 }
 
 bool StudentSpellCheck::load(std::string dictionaryFile) {
